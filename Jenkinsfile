@@ -1,6 +1,10 @@
 pipeline {
     agent { label 'docker-agent' }
 
+    environment {
+        SSH_OPTS = "-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
+    }
+
     stages {
         stage('Setup Remote Pod') {
             steps {
@@ -11,48 +15,47 @@ pipeline {
                         string(credentialsId: 'RUNPOD_SSH_HOST', variable: 'RUNPOD_SSH_HOST'),
                         string(credentialsId: 'RUNPOD_SSH_PORT', variable: 'RUNPOD_SSH_PORT')
                     ]) {
+
                         sh """
-                        echo "Copying GCP key to remote pod..."
-                        scp -P $RUNPOD_SSH_PORT \
-                            -o StrictHostKeyChecking=no \
-                            -o UserKnownHostsFile=/dev/null \
-                            $LOCAL_GCP_KEY \
-                            $RUNPOD_SSH_USER@$RUNPOD_SSH_HOST:/workspace/weapon-detection.json
+                        echo "=== Copying GCP key to remote pod ==="
+                        scp -P $RUNPOD_SSH_PORT $SSH_OPTS \
+                            "$LOCAL_GCP_KEY" \
+                            "$RUNPOD_SSH_USER@$RUNPOD_SSH_HOST:/workspace/weapon-detection.json"
 
-                        echo "Running commands on remote pod..."
-                        ssh -p $RUNPOD_SSH_PORT -o StrictHostKeyChecking=no $RUNPOD_SSH_USER@$RUNPOD_SSH_HOST << 'ENDSSH'
+                        echo "=== Running remote commands ==="
+                        ssh -p $RUNPOD_SSH_PORT $SSH_OPTS \
+                            "$RUNPOD_SSH_USER@$RUNPOD_SSH_HOST" << 'ENDSSH'
+                            set -e
+                            echo "Connected successfully"
+                            nvidia-smi || true
 
-                        echo "Connected successfully"
-                        nvidia-smi || true
+                            cd /workspace
 
-                        cd /workspace
-
-                        # Remove existing weaponDetection directory if present
-                        if [ -d "weaponDetection" ]; then
-                            echo "Removing existing weaponDetection directory..."
+                            echo "Cleaning up old repo if exists..."
                             rm -rf weaponDetection
-                        fi
 
-                        git clone https://github.com/TanmayPatel2809/weaponDetection.git
-                        cd weaponDetection
+                            echo "Cloning repository..."
+                            git clone https://github.com/TanmayPatel2809/weaponDetection.git
+                            cd weaponDetection
 
-                        python3 -m venv venv
-                        source venv/bin/activate
+                            echo "Setting up virtual environment..."
+                            python3 -m venv venv
+                            source venv/bin/activate
 
-                        pip install --upgrade pip
-                        pip install -e .
+                            echo "Installing dependencies..."
+                            pip install --upgrade pip
+                            pip install -e .
 
-                        export GOOGLE_APPLICATION_CREDENTIALS=/workspace/weapon-detection.json
+                            export GOOGLE_APPLICATION_CREDENTIALS=/workspace/weapon-detection.json
 
-                        python pipeline/training_pipeline.py
-                        cd ..
+                            echo "Starting training pipeline..."
+                            python pipeline/training_pipeline.py
                         ENDSSH
 
-                        echo "Copying results back to Jenkins..."
-                        scp -P $RUNPOD_SSH_PORT \
-                            -o StrictHostKeyChecking=no \
-                            -o UserKnownHostsFile=/dev/null \
-                            -r $RUNPOD_SSH_USER@$RUNPOD_SSH_HOST:/workspace/weaponDetection ./weaponDetection
+                        echo "=== Copying results back to Jenkins ==="
+                        scp -P $RUNPOD_SSH_PORT $SSH_OPTS -r \
+                            "$RUNPOD_SSH_USER@$RUNPOD_SSH_HOST:/workspace/weaponDetection" \
+                            "./weaponDetection"
                         """
                     }
                 }
