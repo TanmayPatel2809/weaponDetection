@@ -26,6 +26,13 @@ pipeline {
                         nvidia-smi || true
 
                         cd /workspace
+
+                        # Remove existing weaponDetection directory if present
+                        if [ -d "weaponDetection" ]; then
+                            echo "Removing existing weaponDetection directory..."
+                            rm -rf weaponDetection
+                        fi
+
                         git clone https://github.com/TanmayPatel2809/weaponDetection.git
                         cd weaponDetection
 
