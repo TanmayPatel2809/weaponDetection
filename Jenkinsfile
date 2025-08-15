@@ -112,8 +112,8 @@ ENDSSH
                             --execution-environment=gen2 \\
                             --gpu=type=nvidia-t4,count=1
 
-                        gcloud beta run domain-mappings describe --domain=weapondetection.tanmay-patel.space --region=us-central1 || \
-                        gcloud beta run domain-mappings create \
+                        gcloud run domain-mappings describe --domain=weapondetection.tanmay-patel.space --region=us-central1 || \
+                        gcloud run domain-mappings create \
                             --service=${IMAGE_NAME} \
                             --domain=weapondetection.tanmay-patel.space \
                             --region=us-central1
