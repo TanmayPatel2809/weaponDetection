@@ -1,9 +1,5 @@
 pipeline {
-    agent {
-        docker {
-            label 'docker-agent'
-        }
-    }
+    agent { label 'docker-agent' }
     stages {
 
         stage('Setup Remote Pod') {
