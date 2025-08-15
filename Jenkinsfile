@@ -98,13 +98,20 @@ ENDSSH
                         echo 'Deploy to Google Cloud Run.............'
                         sh '''
                         export PATH=$PATH:${GCLOUD_PATH}
+                        gcloud components install beta --quiet
                         gcloud auth activate-service-account --key-file=${GOOGLE_APPLICATION_CREDENTIALS}
                         gcloud config set project ${GCP_PROJECT}
-                        gcloud run deploy ${IMAGE_NAME} \\
+                        gcloud alpha run deploy ${IMAGE_NAME} \\
                             --image=gcr.io/${GCP_PROJECT}/${IMAGE_NAME}:latest \\
-                            --platform=managed \\
-                            --region=us-central1 \\
-                            --allow-unauthenticated
+                            --no-invoker-iam-check \\
+                            --port=8080 \\
+                            --cpu=4 \\
+                            --memory=16Gi \\
+                            --max-instances=3 \\
+                            --no-cpu-throttling \\
+                            --region=europe-west1 \\
+                            --execution-environment=gen2 \\
+                            --gpu=type=nvidia-t4,count=1
 
                         gcloud beta run domain-mappings describe --domain=weapondetection.tanmay-patel.space --region=us-central1 || \
                         gcloud beta run domain-mappings create \
