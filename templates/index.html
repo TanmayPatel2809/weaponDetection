@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weapon Detection</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+    <div class="container">
+        <h1 class="mt-5">Weapon Detection</h1>
+        <form action="/" method="post" enctype="multipart/form-data" class="mt-4">
+            <div class="form-group">
+                <label for="file">Upload an image or video:</label>
+                <input type="file" class="form-control-file" id="file" name="file" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Upload</button>
+        </form>
+
+        <h2 class="mt-5">Live Webcam Feed</h2>
+        <div class="mt-3">
+            <button id="startWebcam" class="btn btn-success mb-2">Start Webcam Detection</button>
+            <br>
+            <!-- The video element is used as a source but not displayed -->
+            <video id="webcamVideo" width="480" height="360" autoplay playsinline style="display:none;"></video>
+            <!-- The canvas will display the annotated feed from the server -->
+            <canvas id="predictionCanvas" width="480" height="360" style="display:none; border: 1px solid #ccc;"></canvas>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script>
+document.getElementById('startWebcam').onclick = async function() {
+    const video = document.getElementById('webcamVideo');
+    const canvas = document.getElementById('predictionCanvas');
+    const ctx = canvas.getContext('2d');
+    let streamActive = true;
+
+    // Show the canvas and a "Loading..." message
+    canvas.style.display = 'block';
+    ctx.fillStyle = 'black';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = 'white';
+    ctx.textAlign = 'center';
+    ctx.fillText('Starting webcam...', canvas.width / 2, canvas.height / 2);
+
+    try {
+        // Get webcam stream
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        video.srcObject = stream;
+        await video.play(); // Ensure video is playing before we grab frames
+
+        // Hidden canvas to draw the raw frame for data extraction
+        const hiddenCanvas = document.createElement('canvas');
+        hiddenCanvas.width = video.width;
+        hiddenCanvas.height = video.height;
+        const hiddenCtx = hiddenCanvas.getContext('2d');
+
+        async function sendFrame() {
+            if (!streamActive) {
+                // Stop the stream and clear the canvas
+                stream.getTracks().forEach(track => track.stop());
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                video.style.display = 'none';
+                canvas.style.display = 'none';
+                return;
+            }
+
+            hiddenCtx.drawImage(video, 0, 0, hiddenCanvas.width, hiddenCanvas.height);
+            const dataURL = hiddenCanvas.toDataURL('image/jpeg');
+
+            try {
+                const res = await fetch('/predict_webcam', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ image: dataURL })
+                });
+
+                if (res.ok) {
+                    const result = await res.json();
+                    const img = new window.Image();
+                    img.onload = () => {
+                        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                        requestAnimationFrame(sendFrame); // Send next frame after this one is drawn
+                    };
+                    img.src = result.predicted;
+                } else {
+                    console.error("Backend error:", res.statusText);
+                    streamActive = false; // Stop on error
+                    requestAnimationFrame(sendFrame);
+                }
+            } catch (error) {
+                console.error("Fetch error:", error);
+                streamActive = false; // Stop on error
+                requestAnimationFrame(sendFrame);
+            }
+        }
+        sendFrame();
+
+    } catch (err) {
+        console.error("Failed to get webcam stream:", err);
+        ctx.fillStyle = 'red';
+        ctx.fillText('Error: Could not access webcam.', canvas.width / 2, canvas.height / 2 + 20);
+    }
+};
+</script>
+</body>
+</html>
