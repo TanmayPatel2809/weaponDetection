@@ -16,10 +16,14 @@ pipeline {
                         string(credentialsId: 'RUNPOD_SSH_PORT', variable: 'RUNPOD_SSH_PORT')
                     ]) {
                         sh """
+                        echo "=== Creating temporary workspace on remote pod ==="
+                        ssh -p $RUNPOD_SSH_PORT $SSH_OPTS \
+                            "$RUNPOD_SSH_USER@$RUNPOD_SSH_HOST" 'mkdir -p /temp_workspace'
+
                         echo "=== Copying GCP key to remote pod ==="
                         scp -P $RUNPOD_SSH_PORT $SSH_OPTS \
                             "$LOCAL_GCP_KEY" \
-                            "$RUNPOD_SSH_USER@$RUNPOD_SSH_HOST:/workspace/weapon-detection.json"
+                            "$RUNPOD_SSH_USER@$RUNPOD_SSH_HOST:/temp_workspace/weapon-detection.json"
 
                         echo "=== Running remote commands ==="
                         ssh -p $RUNPOD_SSH_PORT $SSH_OPTS \
@@ -28,7 +32,7 @@ set -e
 echo "Connected successfully"
 nvidia-smi || true
 
-cd /workspace
+cd /temp_workspace
 
 echo "Cleaning up old repo if exists..."
 rm -rf weaponDetection
@@ -45,16 +49,16 @@ echo "Installing dependencies..."
 pip install --upgrade pip
 pip install -e .
 
-export GOOGLE_APPLICATION_CREDENTIALS=/workspace/weapon-detection.json
+export GOOGLE_APPLICATION_CREDENTIALS=/temp_workspace/weapon-detection.json
 
 echo "Starting training pipeline..."
 python pipeline/training_pipeline.py
 
 echo "Cleaning up unnecessary files before copying back..."
-rm -rf /workspace/weaponDetection/artifacts/raw
-rm -rf /workspace/weaponDetection/venv
-find /workspace/weaponDetection -type d -name "__pycache__" -exec rm -rf {} +
-find /workspace/weaponDetection -type d -name "*.egg-info" -exec rm -rf {} +
+rm -rf /temp_workspace/weaponDetection/artifacts/raw
+rm -rf /temp_workspace/weaponDetection/venv
+find /temp_workspace/weaponDetection -type d -name "__pycache__" -exec rm -rf {} +
+find /temp_workspace/weaponDetection -type d -name "*.egg-info" -exec rm -rf {} +
 
 ENDSSH
 
@@ -65,7 +69,7 @@ ENDSSH
                         fi
                         
                         scp -P $RUNPOD_SSH_PORT $SSH_OPTS -r \
-                            "$RUNPOD_SSH_USER@$RUNPOD_SSH_HOST:/workspace/weaponDetection" \
+                            "$RUNPOD_SSH_USER@$RUNPOD_SSH_HOST:/temp_workspace/weaponDetection" \
                             "."
                         """
                     }
