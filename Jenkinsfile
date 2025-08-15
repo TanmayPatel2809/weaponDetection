@@ -98,7 +98,6 @@ ENDSSH
                         echo 'Deploy to Google Cloud Run.............'
                         sh '''
                         export PATH=$PATH:${GCLOUD_PATH}
-                        gcloud components install beta --quiet
                         gcloud auth activate-service-account --key-file=${GOOGLE_APPLICATION_CREDENTIALS}
                         gcloud config set project ${GCP_PROJECT}
                         gcloud alpha run deploy ${IMAGE_NAME} \\
