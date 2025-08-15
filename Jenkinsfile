@@ -1,24 +1,25 @@
 pipeline {
     agent { label 'docker-agent' }
-    stages {
 
+    stages {
         stage('Setup Remote Pod') {
             steps {
                 sshagent(['RUNPOD_SSH_KEY']) {
-                    withCredentials([file(credentialsId: 'gcp-key', variable: 'LOCAL_GCP_KEY'),string(credentialsId: 'RUNPOD_SSH_USER', variable: 'RUNPOD_SSH_USER'),
-                    string(credentialsId: 'RUNPOD_SSH_HOST', variable: 'RUNPOD_SSH_HOST'),
-                    string(credentialsId: 'RUNPOD_SSH_PORT', variable: 'RUNPOD_SSH_PORT')]) {
-
+                    withCredentials([
+                        file(credentialsId: 'gcp-key', variable: 'LOCAL_GCP_KEY'),
+                        string(credentialsId: 'RUNPOD_SSH_USER', variable: 'RUNPOD_SSH_USER'),
+                        string(credentialsId: 'RUNPOD_SSH_HOST', variable: 'RUNPOD_SSH_HOST'),
+                        string(credentialsId: 'RUNPOD_SSH_PORT', variable: 'RUNPOD_SSH_PORT')
+                    ]) {
                         sh """
-                        # Copy the GCP JSON key to the remote pod
-                        scp -P 20299 \
+                        echo "Copying GCP key to remote pod..."
+                        scp -P $RUNPOD_SSH_PORT \
                             -o StrictHostKeyChecking=no \
                             -o UserKnownHostsFile=/dev/null \
-                            weapon-detection.json \
-                            root@213.173.110.200:/workspace/weapon-detection.json
+                            $LOCAL_GCP_KEY \
+                            $RUNPOD_SSH_USER@$RUNPOD_SSH_HOST:/workspace/weapon-detection.json
 
- 
-                        # SSH into remote pod and run commands
+                        echo "Running commands on remote pod..."
                         ssh -p $RUNPOD_SSH_PORT -o StrictHostKeyChecking=no $RUNPOD_SSH_USER@$RUNPOD_SSH_HOST << 'ENDSSH'
 
                         echo "Connected successfully"
@@ -28,24 +29,23 @@ pipeline {
                         git clone https://github.com/TanmayPatel2809/weaponDetection.git
                         cd weaponDetection
 
-                        # Create and activate virtual environment
                         python3 -m venv venv
                         source venv/bin/activate
 
-                        # Upgrade pip and install package
                         pip install --upgrade pip
                         pip install -e .
 
-                        # Set GCP credentials
                         export GOOGLE_APPLICATION_CREDENTIALS=/workspace/weapon-detection.json
 
                         python pipeline/training_pipeline.py
-
                         cd ..
-
                         ENDSSH
 
-                        scp -P $RUNPOD_SSH_PORT -r $RUNPOD_SSH_USER@$RUNPOD_SSH_HOST:/workspace/weaponDetection ./weaponDetection
+                        echo "Copying results back to Jenkins..."
+                        scp -P $RUNPOD_SSH_PORT \
+                            -o StrictHostKeyChecking=no \
+                            -o UserKnownHostsFile=/dev/null \
+                            -r $RUNPOD_SSH_USER@$RUNPOD_SSH_HOST:/workspace/weaponDetection ./weaponDetection
                         """
                     }
                 }
