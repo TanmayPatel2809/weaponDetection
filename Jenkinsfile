@@ -97,6 +97,7 @@ ENDSSH
                     script{
                         echo 'Deploy to Google Cloud Run.............'
                         sh '''
+                        export CLOUDSDK_INSTALL_DIR=/var/jenkins_home/google-cloud-sdk
                         export PATH=$PATH:${GCLOUD_PATH}
                         gcloud auth activate-service-account --key-file=${GOOGLE_APPLICATION_CREDENTIALS}
                         gcloud config set project ${GCP_PROJECT}
