@@ -1,7 +1,7 @@
 pipeline {
     agent {
         docker {
-            label 'docker-agent'
+            image 'docker:dind'
         }
     }
     stages {
