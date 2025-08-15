@@ -106,6 +106,7 @@ ENDSSH
                             --port=8080 \\
                             --cpu=4 \\
                             --memory=16Gi \\
+                            --max-instances=3 \\
                             --no-cpu-throttling \\
                             --region=us-central1 \\
                             --gpu=1 \\
