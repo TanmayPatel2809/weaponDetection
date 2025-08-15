@@ -117,7 +117,6 @@ ENDSSH
                         gcloud run domain-mappings create \
                             --service=${IMAGE_NAME} \
                             --domain=weapondetection.tanmay-patel.space \
-                            --region=us-central1
                         '''
                     }
                 }
