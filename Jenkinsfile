@@ -100,7 +100,7 @@ ENDSSH
                         export PATH=$PATH:${GCLOUD_PATH}
                         gcloud auth activate-service-account --key-file=${GOOGLE_APPLICATION_CREDENTIALS}
                         gcloud config set project ${GCP_PROJECT}
-                        gcloud alpha run deploy ${IMAGE_NAME} \\
+                        gcloud run deploy ${IMAGE_NAME} \\
                             --image=gcr.io/${GCP_PROJECT}/${IMAGE_NAME}:latest \\
                             --no-invoker-iam-check \\
                             --port=8080 \\
@@ -108,7 +108,9 @@ ENDSSH
                             --memory=16Gi \\
                             --no-cpu-throttling \\
                             --region=us-central1 \\
-                            --gpu 1
+                            --gpu=1 \\
+                            --gpu-type=nvidia-l4 \\
+                            --no-gpu-zonal-redundancy
 
                         gcloud run domain-mappings describe --domain=weapondetection.tanmay-patel.space --region=us-central1 || \
                         gcloud run domain-mappings create \
