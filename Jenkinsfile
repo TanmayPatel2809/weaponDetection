@@ -71,7 +71,9 @@ ENDSSH
                         scp -P $RUNPOD_SSH_PORT $SSH_OPTS -r \
                             "$RUNPOD_SSH_USER@$RUNPOD_SSH_HOST:/temp_workspace/weaponDetection" \
                             "."
+                        echo "=== Complete ==="
                         """
+                        
                     }
                 }
             }

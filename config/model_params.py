@@ -5,5 +5,5 @@ MODEL_PARAMS = {
     "batch_size": 64,
     "imgsz": 640,
     "save": True,
-    "workers": 2
+    "workers": 12
 }
