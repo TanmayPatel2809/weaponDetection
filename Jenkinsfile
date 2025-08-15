@@ -107,9 +107,8 @@ ENDSSH
                             --port=8080 \\
                             --cpu=4 \\
                             --memory=16Gi \\
-                            --max-instances=3 \\
                             --no-cpu-throttling \\
-                            --region=europe-west1 \\
+                            --region=us-central1 \\
                             --execution-environment=gen2 \\
                             --gpu=type=nvidia-t4,count=1
 
