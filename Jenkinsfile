@@ -52,9 +52,14 @@ python pipeline/training_pipeline.py
 ENDSSH
 
                         echo "=== Copying results back to Jenkins ==="
+                        if [ -d "./weaponDetection" ]; then
+                            echo "Local weaponDetection directory exists. Deleting it..."
+                            rm -rf "./weaponDetection"
+                        fi
+                        
                         scp -P $RUNPOD_SSH_PORT $SSH_OPTS -r \
                             "$RUNPOD_SSH_USER@$RUNPOD_SSH_HOST:/workspace/weaponDetection" \
-                            "./weaponDetection"
+                            "."
                         """
                     }
                 }
