@@ -114,11 +114,7 @@ ENDSSH
                             --gpu-type=nvidia-l4 \\
                             --no-gpu-zonal-redundancy
 
-                        gcloud beta run domain-mappings describe weapondetection.tanmay-patel.space --region=us-central1 || \
-                        gcloud beta run domain-mappings create \
-                            --service=${IMAGE_NAME} \
-                            --domain=weapondetection.tanmay-patel.space \
-                            --region=us-central1
+                        echo "Cloud Run deployment completed successfully"
                         '''     
                     }
                 }
