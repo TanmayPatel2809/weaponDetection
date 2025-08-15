@@ -11,7 +11,12 @@ pipeline {
 
                         sh """
                         # Copy the GCP JSON key to the remote pod
-                        scp -P $RUNPOD_SSH_PORT $LOCAL_GCP_KEY $RUNPOD_SSH_USER@$RUNPOD_SSH_HOST:/workspace/weapon-detection.json
+                        scp -P 20299 \
+                            -o StrictHostKeyChecking=no \
+                            -o UserKnownHostsFile=/dev/null \
+                            weapon-detection.json \
+                            root@213.173.110.200:/workspace/weapon-detection.json
+
  
                         # SSH into remote pod and run commands
                         ssh -p $RUNPOD_SSH_PORT -o StrictHostKeyChecking=no $RUNPOD_SSH_USER@$RUNPOD_SSH_HOST << 'ENDSSH'
