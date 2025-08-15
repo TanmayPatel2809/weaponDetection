@@ -49,7 +49,13 @@ export GOOGLE_APPLICATION_CREDENTIALS=/workspace/weapon-detection.json
 
 echo "Starting training pipeline..."
 python pipeline/training_pipeline.py
+
+echo "Cleaning up unnecessary files before copying back..."
 rm -rf /workspace/weaponDetection/artifacts/raw
+rm -rf /workspace/weaponDetection/venv
+find /workspace/weaponDetection -type d -name "__pycache__" -exec rm -rf {} +
+find /workspace/weaponDetection -type d -name "*.egg-info" -exec rm -rf {} +
+
 ENDSSH
 
                         echo "=== Copying results back to Jenkins ==="
