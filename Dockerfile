@@ -21,7 +21,7 @@ COPY . .
 RUN pip install -e . && rm -rf /root/.cache/pip
 
 # Expose port
-EXPOSE 5000
+EXPOSE 8080
 
 # Command to run the application
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "1", "--timeout", "120", "app:app"]
+CMD ["gunicorn", "--bind", "0.0.0.0:8080", "--workers", "1", "--timeout", "120", "app:app"]
