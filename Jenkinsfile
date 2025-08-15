@@ -108,8 +108,7 @@ ENDSSH
                             --memory=16Gi \\
                             --no-cpu-throttling \\
                             --region=us-central1 \\
-                            --execution-environment=gen2 \\
-                            --gpu=type=nvidia-t4,count=1
+                            --gpu 1
 
                         gcloud run domain-mappings describe --domain=weapondetection.tanmay-patel.space --region=us-central1 || \
                         gcloud run domain-mappings create \
