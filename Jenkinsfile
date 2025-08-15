@@ -15,7 +15,6 @@ pipeline {
                         string(credentialsId: 'RUNPOD_SSH_HOST', variable: 'RUNPOD_SSH_HOST'),
                         string(credentialsId: 'RUNPOD_SSH_PORT', variable: 'RUNPOD_SSH_PORT')
                     ]) {
-
                         sh """
                         echo "=== Copying GCP key to remote pod ==="
                         scp -P $RUNPOD_SSH_PORT $SSH_OPTS \
@@ -25,32 +24,32 @@ pipeline {
                         echo "=== Running remote commands ==="
                         ssh -p $RUNPOD_SSH_PORT $SSH_OPTS \
                             "$RUNPOD_SSH_USER@$RUNPOD_SSH_HOST" << 'ENDSSH'
-                            set -e
-                            echo "Connected successfully"
-                            nvidia-smi || true
+set -e
+echo "Connected successfully"
+nvidia-smi || true
 
-                            cd /workspace
+cd /workspace
 
-                            echo "Cleaning up old repo if exists..."
-                            rm -rf weaponDetection
+echo "Cleaning up old repo if exists..."
+rm -rf weaponDetection
 
-                            echo "Cloning repository..."
-                            git clone https://github.com/TanmayPatel2809/weaponDetection.git
-                            cd weaponDetection
+echo "Cloning repository..."
+git clone https://github.com/TanmayPatel2809/weaponDetection.git
+cd weaponDetection
 
-                            echo "Setting up virtual environment..."
-                            python3 -m venv venv
-                            source venv/bin/activate
+echo "Setting up virtual environment..."
+python3 -m venv venv
+source venv/bin/activate
 
-                            echo "Installing dependencies..."
-                            pip install --upgrade pip
-                            pip install -e .
+echo "Installing dependencies..."
+pip install --upgrade pip
+pip install -e .
 
-                            export GOOGLE_APPLICATION_CREDENTIALS=/workspace/weapon-detection.json
+export GOOGLE_APPLICATION_CREDENTIALS=/workspace/weapon-detection.json
 
-                            echo "Starting training pipeline..."
-                            python pipeline/training_pipeline.py
-                        ENDSSH
+echo "Starting training pipeline..."
+python pipeline/training_pipeline.py
+ENDSSH
 
                         echo "=== Copying results back to Jenkins ==="
                         scp -P $RUNPOD_SSH_PORT $SSH_OPTS -r \
